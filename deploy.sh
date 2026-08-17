@@ -32,9 +32,16 @@ if ! command -v git >/dev/null 2>&1; then
 fi
 
 echo "Found:"
-for f in index.html README.md DEPLOY.md; do
+for f in index.html shatamanam-bhavati.mp3 README.md DEPLOY.md; do
   [ -f "$f" ] && echo "   • $f  ($(du -h "$f" | cut -f1))"
 done
+
+# the song is a separate file — easy to leave behind when copying the folder
+if [ ! -f "shatamanam-bhavati.mp3" ]; then
+  echo
+  echo "! shatamanam-bhavati.mp3 is missing — the site will publish and work,"
+  echo "  but it will be silent. Put the mp3 back beside index.html to fix it."
+fi
 echo
 
 # ── first run: set the repo up ───────────────────────────────────────

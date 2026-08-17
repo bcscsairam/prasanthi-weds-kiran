@@ -27,7 +27,10 @@ yourself and open it on your phone.
 - [ ] Tap **Tap to Open** — a golden circle expands from your fingertip
 - [ ] Tap the screen a few times — pastel flowers gust across it
 - [ ] **RSVP** and **Directions** glow gently — rose and powder blue
-- [ ] No sound, and no speaker icon in the corner — that is intended for now
+- [ ] *Shatamanam Bhavati* fades in a moment after the invitation opens
+- [ ] Speaker icon, top right — tap it to mute, tap again to bring it back
+- [ ] Leave it playing past **2:40** — it should slip back to the start, not
+      fall silent
 - [ ] Tap **RSVP**, fill it in, tap Send —
       **confirm WhatsApp opens to 9440972344 with the message ready**
 - [ ] Tap **Directions → Open in Maps** — confirm it lands on Dhanavarsha
@@ -133,7 +136,9 @@ Once you are happy with the link:
 | `Updates were rejected` | Run `git pull --rebase origin main`, then `bash deploy.sh` again |
 | The terminal asks for a password | Your GitHub account password will not work here. See the box below. |
 | Fonts look plain | The page loads its fonts from the internet. Reload on a better connection. |
-| No sound at all | Intended — the music is switched off. See *The music* in `README.md` to turn it back on. |
+| No music, everything else fine | `shatamanam-bhavati.mp3` did not get copied across. It must sit beside `index.html` under exactly that name. |
+| Music won't start on an iPhone | Check the physical **silent switch** on the side of the phone — it mutes web audio on iOS. |
+| Music takes a few seconds to arrive | Normal on a slow connection. The song is 3.8 MB and streams while the page is already readable. |
 | No flowers | They only appear after the invitation opens, and stay off if the phone has *Reduce Motion* switched on. |
 
 **If it asks for a password,** you need a token instead:

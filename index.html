@@ -644,6 +644,11 @@ dialog::backdrop{background:transparent}
 
 <canvas id="blooms"></canvas>
 
+<!-- Shatamanam Bhavati. Sits beside index.html as its own file rather than
+     inline: 3.8 MB of base64 would have to finish downloading before the
+     invitation could draw, where a separate file streams alongside it. -->
+<audio id="song" src="shatamanam-bhavati.mp3" preload="metadata"></audio>
+
 <button id="musicToggle" class="muted" aria-label="Toggle music">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
     <path d="M11 5 6 9H3v6h3l5 4z" fill="currentColor" stroke="none"/>
@@ -952,7 +957,11 @@ function showInvitation(cascade){
 function openCard(ev){
   if(opening)return;opening=true;
   history.pushState({view:'card'},'');
-  unlockAudio();                      // iOS: unlock audio inside the tap gesture
+  /* play() must be called inside the tap itself or iOS refuses it. The song
+     starts silent here and the fade-in is held back so it still enters with
+     the reveal rather than the tap. Reduce Motion is about movement, not
+     sound, so this sits above that branch and both paths get the music. */
+  startMusic();
   if(reduceMotion){                   // fallback: simple quick crossfade
     cover.classList.add('gone');
     setTimeout(()=>{cover.hidden=true;showInvitation(false);},60);
@@ -964,8 +973,6 @@ function openCard(ev){
   r.style.left=x+'px';r.style.top=y+'px';
   document.body.appendChild(r);setTimeout(()=>r.remove(),700);
   cover.classList.add('press');
-  /* music enters with the reveal, not the tap — maximum effect */
-  setTimeout(()=>{ if(!musicOn) startMusic(); },380);
   /* STAGE 2 (160ms–1.25s) — the luminous iris opens from the tap point */
   setTimeout(()=>{
     cover.classList.remove('press');
@@ -1153,69 +1160,87 @@ $('#rsvpForm').addEventListener('submit',e=>{
 });
 
 /* ══════════════════════════════════════════════════════════════
-   ambient music — SWITCHED OFF.
+   music — Shatamanam Bhavati (shatamanam-bhavati.mp3)
 
-   The synthesised drone came out harsh on phone speakers, so it is
-   disabled and the speaker button is hidden with it. Nothing else
-   references it, so the rest of the page is unaffected.
+   Plays 0:00 → 2:40 and returns to the start, so guests never
+   reach the tail of the track. The join is smoothed by a short
+   fade either side, and the song enters with the reveal rather
+   than landing at full volume on the tap.
 
-   To bring it back: set MUSIC_ENABLED to true. That is the only
-   edit needed — the button reappears and the drone fades in with
-   the reveal, as before.
+   To silence the site again, set MUSIC_ENABLED to false — the
+   speaker button hides with it and nothing else needs touching.
    ══════════════════════════════════════════════════════════════ */
-const MUSIC_ENABLED=false;
+const MUSIC_ENABLED=true;
+const LOOP_END=160;      /* 2:40 in seconds — where it returns to 0:00 */
+const SEAM=0.8;          /* fade either side of the loop join */
+const SONG_VOL=0.62;     /* settled volume */
 
-let audioCtx=null,musicOn=false,bellTimer=null,master=null,voices=[];
-const mBtn=$('#musicToggle');
-if(!MUSIC_ENABLED)mBtn.hidden=true;   /* no dead control left on screen */
+const song=$('#song'), mBtn=$('#musicToggle');
+let musicOn=false,gain=0,target=0,raf=null,pauseT=null;
+let actx=null,gainNode=null;
 
-function unlockAudio(){
-  if(!MUSIC_ENABLED)return;
-  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==='suspended')audioCtx.resume();
+if(!MUSIC_ENABLED)mBtn.hidden=true;
+/* a missing or unplayable file must not leave a dead control on screen */
+song.addEventListener('error',()=>{mBtn.hidden=true;musicOn=false;});
+
+/* iOS ignores .volume on a media element outright, so the fades have to run
+   through a Web Audio gain node to exist on iPhone at all. Skipped on
+   file:// — there the graph can silently produce nothing, and a family
+   double-clicking index.html to check their edit would hear silence. */
+function buildGraph(){
+  if(actx||location.protocol==='file:')return;
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC)return;
+  try{
+    actx=new AC();
+    gainNode=actx.createGain();gainNode.gain.value=0;
+    actx.createMediaElementSource(song).connect(gainNode);
+    gainNode.connect(actx.destination);
+  }catch(e){actx=null;gainNode=null;}   /* fall back to element volume */
 }
+function setGain(v){
+  if(gainNode)gainNode.gain.value=v; else song.volume=v;
+}
+
+/* One pass of loop-check + volume. Driven by the animation frame while the
+   page is visible, and by timeupdate as well — rAF stalls in a backgrounded
+   tab, and driving the volume from it alone would leave the song playing
+   silently. The step is scaled by elapsed time, so the fade takes the same
+   two seconds whether it is called 60 times a second or four. */
+const TAU=0.7;
+let lastT=0;
+function applyGain(now){
+  const dt=lastT?Math.min(.25,(now-lastT)/1000):.016; lastT=now;
+  if(song.currentTime>=LOOP_END)song.currentTime=0;
+  const t=song.currentTime;
+  gain+=(target-gain)*Math.min(1,dt/TAU);
+  let seam=1;
+  if(t<SEAM)                 seam=t/SEAM;                 /* in  */
+  else if(t>LOOP_END-SEAM)   seam=(LOOP_END-t)/SEAM;      /* out */
+  setGain(Math.min(1,Math.max(0,gain*seam)));
+}
+song.addEventListener('timeupdate',()=>applyGain(performance.now()));
+function envelope(now){ applyGain(now); raf=requestAnimationFrame(envelope); }
 function startMusic(){
-  if(!MUSIC_ENABLED||musicOn)return;  /* guard: repeat taps can't stack drones */
-  unlockAudio();
-  const out=master=audioCtx.createGain();
-  out.gain.value=0;out.connect(audioCtx.destination);
-  out.gain.linearRampToValueAtTime(0.1,audioCtx.currentTime+2);
-  [[132,.5],[198,.35],[264,.22]].forEach(([f,v])=>{
-    const o=audioCtx.createOscillator(),g2=audioCtx.createGain(),lp=audioCtx.createBiquadFilter();
-    o.type='sawtooth';o.frequency.value=f;lp.type='lowpass';lp.frequency.value=900;
-    const lfo=audioCtx.createOscillator(),lg=audioCtx.createGain();
-    lfo.frequency.value=0.1+Math.random()*0.1;lg.gain.value=v*0.25;
-    lfo.connect(lg);lg.connect(g2.gain);g2.gain.value=v*0.5;
-    o.connect(lp);lp.connect(g2);g2.connect(out);o.start();lfo.start();
-    voices.push(o,lfo);
-  });
-  function bell(){
-    const o=audioCtx.createOscillator(),g2=audioCtx.createGain();
-    o.type='sine';o.frequency.value=1056;
-    const o2=audioCtx.createOscillator();o2.type='sine';o2.frequency.value=1584;
-    const g3=audioCtx.createGain();g3.gain.value=0.3;
-    g2.gain.setValueAtTime(0.22,audioCtx.currentTime);
-    g2.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+3.5);
-    o.connect(g2);o2.connect(g3);g3.connect(g2);g2.connect(out);
-    o.start();o2.start();o.stop(audioCtx.currentTime+3.6);o2.stop(audioCtx.currentTime+3.6);
-    voices.push(o,o2);                /* tracked, so mute silences a ringing bell */
-  }
-  bell();bellTimer=setInterval(bell,9000);
+  if(!MUSIC_ENABLED||musicOn)return;
+  clearTimeout(pauseT);
+  buildGraph();
+  if(actx&&actx.state==='suspended')actx.resume();
+  setGain(0);
+  const p=song.play();
+  /* a refused play() is not a failure — leave the button muted to be tapped */
+  if(p&&p.catch)p.catch(()=>{musicOn=false;mBtn.classList.add('muted');});
   musicOn=true;mBtn.classList.remove('muted');
+  setTimeout(()=>{if(musicOn)target=SONG_VOL;},380);   /* enters with the reveal */
+  if(!raf)raf=requestAnimationFrame(envelope);
 }
 function stopMusic(){
-  clearInterval(bellTimer);bellTimer=null;
-  const dying=voices,out=master,ctx=audioCtx;
-  voices=[];master=null;musicOn=false;mBtn.classList.add('muted');
-  if(!out||!ctx)return;
-  const t=ctx.currentTime;              /* fade out — cutting dead clicks */
-  out.gain.cancelScheduledValues(t);
-  out.gain.setValueAtTime(out.gain.value,t);
-  out.gain.linearRampToValueAtTime(0.0001,t+.35);
-  setTimeout(()=>{
-    dying.forEach(n=>{try{n.stop()}catch(e){}try{n.disconnect()}catch(e){}});
-    try{out.disconnect()}catch(e){}
-  },420);
+  musicOn=false;target=0;mBtn.classList.add('muted');
+  clearTimeout(pauseT);
+  pauseT=setTimeout(()=>{                 /* let the fade finish, then stop */
+    song.pause();
+    if(raf){cancelAnimationFrame(raf);raf=null;}
+  },1200);
 }
 mBtn.addEventListener('click',()=>musicOn?stopMusic():startMusic());
 </script>

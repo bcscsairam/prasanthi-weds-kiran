@@ -17,14 +17,18 @@ Dr. B.R. Ambedkar Konaseema District, Andhra Pradesh
 
 | File | What it is |
 |---|---|
-| `index.html` | **The entire website.** Markup, styles, scripts and the couple's portrait are all inside this one file. |
+| `index.html` | **The website.** Markup, styles, scripts and the couple's portrait are all inside this one file. |
+| `shatamanam-bhavati.mp3` | The song. The one asset kept outside `index.html` — see *The music*. |
 | `deploy.sh` | One command to push updates live. |
 | `DEPLOY.md` | The live link, how updates reach it, and the phone test. |
 | `README.md` | This document — how to edit it. |
 
 There is **no build step, no `npm install`, no dependencies.** The portrait is
 embedded as base64, so there are no image paths that can break when you move the
-file. The only thing loaded from the internet is the Google Fonts stylesheet.
+file. The song is the one exception — 3.8 MB of base64 would have to finish
+downloading before the invitation could draw, where a separate file streams
+alongside it. Keep the two together. From the internet, the page loads only the
+Google Fonts stylesheet.
 
 > **Keep the filename `index.html`.** Every hosting platform serves that name
 > automatically at the root URL. Rename it and guests will have to type the
@@ -217,20 +221,44 @@ Two things worth leaving alone:
 
 ## The music
 
-**Switched off.** The synthesised drone came out harsh on phone speakers, so it
-is disabled and the speaker button is hidden with it.
+**Shatamanam Bhavati**, in `shatamanam-bhavati.mp3`. It starts when a guest taps
+to open, plays **0:00 → 2:40**, then returns to the start and goes round again —
+so nobody reaches the tail of the track.
 
-Search `MUSIC_ENABLED` in the JavaScript:
+> ⚠️ **This is the one file that is not inside `index.html`.** The song must sit
+> in the same folder as `index.html`, under exactly that name. Move or rename it
+> and the site still works perfectly — just silently. `deploy.sh` warns you if it
+> has gone missing.
+
+The controls are four values at the top of the music section:
 
 ```js
-const MUSIC_ENABLED=false;   // ← true brings the music and its button back
+const MUSIC_ENABLED=true;   // false silences the site and hides the button
+const LOOP_END=160;         // 2:40 in seconds — where it returns to 0:00
+const SEAM=0.8;             // fade either side of the loop join
+const SONG_VOL=0.62;        // settled volume
 ```
 
-That one word is the whole switch. Nothing else needs touching — the button
-reappears, and the drone fades in with the reveal as before.
+**A different loop point:** `LOOP_END` is in *seconds* — 2:40 is `160`, 3:15
+would be `195`. Keep it below the track's real length (3:23 / 203s).
+**A different song:** drop the file in beside `index.html`, update the `src` on
+`<audio id="song">`, and reset `LOOP_END` to suit it.
+**Louder or softer:** `SONG_VOL`, between 0 and 1.
 
-If you do turn it back on, listen on a **phone speaker**, not headphones. That
-is where it was a problem.
+Three things worth leaving alone:
+
+- **`play()` is called inside the tap handler.** iOS refuses audio that starts
+  even a moment after the gesture, so moving it into a `setTimeout` would mean
+  no sound on any iPhone. The song starts silent and the *fade-in* is what gets
+  delayed, which is why it still enters with the reveal rather than the tap.
+- **The volume runs through a Web Audio gain node,** not `audio.volume`. iOS
+  ignores `.volume` on a media element completely, so the fades would not exist
+  on iPhone otherwise. On `file://` it falls back to `.volume`, because the
+  Web Audio route can come out silent when the page is opened by double-click.
+- **The fade is driven by `timeupdate` as well as the animation frame.** Frames
+  stop in a backgrounded tab; driving the volume from them alone left the song
+  playing silently. The step is scaled by elapsed time, so the fade lasts the
+  same two seconds either way.
 
 ---
 
