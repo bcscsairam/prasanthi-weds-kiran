@@ -2,15 +2,22 @@
 # ─────────────────────────────────────────────────────────────────────
 #  Prasanthi weds Kiran — one-command deploy
 #
-#  First time:
-#     bash deploy.sh https://github.com/YOUR-USERNAME/prasanthi-weds-kiran.git
-#
-#  Every time after that:
 #     bash deploy.sh
+#
+#  Pushes to GitHub. Netlify is linked to that repository and publishes
+#  the change on its own, usually within a minute. There is no second
+#  step to do by hand.
+#
+#  Setting up again on a new machine:
+#     bash deploy.sh https://github.com/bcscsairam/prasanthi-weds-kiran.git
 # ─────────────────────────────────────────────────────────────────────
 set -e
 
 REMOTE="$1"
+
+# the live site Netlify serves from this repository
+SITE="https://prasanthi-weds-kiran.netlify.app/"
+DASH="https://app.netlify.com/projects/prasanthi-weds-kiran/deploys"
 
 # ── sanity checks ────────────────────────────────────────────────────
 if [ ! -f "index.html" ]; then
@@ -72,28 +79,24 @@ echo "→ Pushing…  (if it asks for a password, paste a GitHub Personal Access
 echo "             Token, not your account password — see DEPLOY.md)"
 git push -u origin main
 
-# ── tell them exactly what to do next ────────────────────────────────
-URL=$(git remote get-url origin)
-USER=$(echo "$URL" | sed -E 's#.*github\.com[:/]([^/]+)/.*#\1#')
-REPO=$(echo "$URL" | sed -E 's#.*/([^/]+)$#\1#; s#\.git$##')
-
+# ── tell them exactly what happens next ──────────────────────────────
 cat <<EOF
 
 ════════════════════════════════════════════════════════════════════
  ✓ Pushed to GitHub.
 
- ONE STEP LEFT — turn on Pages (takes about 20 seconds):
+ Nothing left to do. Netlify watches this repository and publishes
+ the change by itself — give it about a minute.
 
-   1. Open  https://github.com/$USER/$REPO/settings/pages
-   2. Source:  Deploy from a branch
-   3. Branch:  main   /  (root)     → Save
-   4. Wait ~1 minute, then refresh the page.
+ Your invitation:
 
- Your invitation will be live at:
+   $SITE
 
-   https://$USER.github.io/$REPO/
+ Watch the update land (your dashboard, not for guests):
 
- Open it on your PHONE before sending it to anyone, and test the
- RSVP button all the way through to WhatsApp.
+   $DASH
+
+ If the page still looks old, hold Shift and click refresh — that is
+ your browser showing you the copy it saved earlier.
 ════════════════════════════════════════════════════════════════════
 EOF

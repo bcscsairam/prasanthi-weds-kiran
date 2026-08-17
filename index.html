@@ -463,13 +463,50 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
   border:1px solid var(--gold);
   display:flex;align-items:center;justify-content:center;
   background:var(--white);color:var(--gold-deep);
-  box-shadow:0 10px 26px -10px rgba(61,54,44,.25);
   transition:transform .3s, box-shadow .3s;position:relative;
+  /* --glow is the button's own accent as an r,g,b triplet, so the halo
+     below can be composed at several alphas from one value */
+  --glow:201,169,106;
+  /* lifted off the paper, then lit. The lit layer is declared here and
+     not only in the keyframes, so it survives prefers-reduced-motion. */
+  box-shadow:0 10px 26px -10px rgba(61,54,44,.25),
+             0 0 18px 2px rgba(var(--glow),.34);
+  animation:orbGlow 3.4s ease-in-out infinite;   /* same clock as the names */
 }
-.orb-btn:active{transform:scale(.95)}
-.orb-btn.rsvp{color:var(--rosegold);border-color:var(--rosegold)}
-.orb-btn.dirs{color:var(--powder);border-color:var(--powder)}
+.orb-btn:focus-visible{outline:2px solid rgba(var(--glow),.9);outline-offset:3px}
+.orb-btn.rsvp{color:var(--rosegold);border-color:var(--rosegold);--glow:150,87,105}
+.orb-btn.dirs{color:var(--powder);border-color:var(--powder);--glow:71,97,123}
 .orb-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+/* a single soft ring breathing outward once per cycle — a beacon, not a
+   badge. Border-only, so it never covers the icon; inert to taps. */
+.orb-btn::after{
+  content:'';position:absolute;inset:-1px;border-radius:50%;
+  border:1px solid rgba(var(--glow),.5);
+  pointer-events:none;opacity:0;
+  animation:orbPing 3.4s ease-out infinite;
+}
+@keyframes orbGlow{
+  0%,100%{box-shadow:0 10px 26px -10px rgba(61,54,44,.25),
+                     0 0 13px 1px rgba(var(--glow),.20)}
+  50%    {box-shadow:0 10px 26px -10px rgba(61,54,44,.25),
+                     0 0 28px 6px rgba(var(--glow),.48)}
+}
+@keyframes orbPing{
+  0%      {transform:scale(1);   opacity:.5}
+  55%,100%{transform:scale(1.45);opacity:0}
+}
+@media (hover:hover){
+  /* a running animation outranks any normal rule, so the breathe has to be
+     called off entirely for the hover state to be seen at all */
+  .orb-btn:hover{
+    animation:none;
+    transform:translateY(-2px);
+    box-shadow:0 14px 30px -10px rgba(61,54,44,.28),
+               0 0 32px 7px rgba(var(--glow),.55);
+  }
+}
+/* last, so the press beats both the hover lift and the resting state */
+.orb-btn:active{transform:scale(.95)}
 .orb-label{font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:2.5px;text-transform:uppercase;color:var(--ink-soft)}
 
 /* ══════════════════════════════════════════════════════════════
@@ -781,7 +818,7 @@ dialog::backdrop{background:transparent}
           <div class="muhurtham">Muhurtham at 11:41 PM</div>
           <div class="pancha">Parabhava Samvatsara · Sravana Suddha Chaturdasi<br>Dhanishta Nakshatram · Vrushabha Lagnam</div>
           <div class="venue"><strong>Dhanavarsha Function Hall</strong><br>Ganti Road, P. Gannavaram<br>Dr. B.R. Ambedkar Konaseema District, Andhra Pradesh</div>
-          <div class="vindu">Vindu (Dinner) from 6:00 PM at the Kalyana Vedika</div>
+          <div class="vindu">Vindu (Dinner) from 7:00 PM at the Kalyana Vedika</div>
         </div>
       </div>
 
@@ -884,7 +921,7 @@ const $ = s => document.querySelector(s);
 const EVENTS = [
   ["Pellikuthuru","23rd August · 8:21 AM","The bride is ceremonially anointed with turmeric and blessed by elders as the pelli kuthuru."],
   ["Haldi Day","23rd August","A joyful haldi celebration — turmeric, music and laughter as family and friends bless the couple."],
-  ["Vindu","27th August · From 6:00 PM","Dinner and celebrations with family and friends at the Kalyana Vedika."],
+  ["Vindu","27th August · From 7:00 PM","Dinner and celebrations with family and friends at the Kalyana Vedika."],
   ["Jeelakarra Bellam","27th August · 11:41 PM Muhurtham","At the exact auspicious moment, the couple places cumin-and-jaggery paste on each other's heads — the heart of a Telugu wedding."]
 ];
 const list = $('#eventsList');
@@ -1116,27 +1153,41 @@ $('#rsvpForm').addEventListener('submit',e=>{
 });
 
 /* ══════════════════════════════════════════════════════════════
-   ambient music (Web Audio placeholder) — user-tap only;
-   AudioContext unlocked by tap-to-open (iOS rule)
+   ambient music — SWITCHED OFF.
+
+   The synthesised drone came out harsh on phone speakers, so it is
+   disabled and the speaker button is hidden with it. Nothing else
+   references it, so the rest of the page is unaffected.
+
+   To bring it back: set MUSIC_ENABLED to true. That is the only
+   edit needed — the button reappears and the drone fades in with
+   the reveal, as before.
    ══════════════════════════════════════════════════════════════ */
-let audioCtx=null,musicOn=false,bellTimer=null,droneNodes=[];
+const MUSIC_ENABLED=false;
+
+let audioCtx=null,musicOn=false,bellTimer=null,master=null,voices=[];
 const mBtn=$('#musicToggle');
+if(!MUSIC_ENABLED)mBtn.hidden=true;   /* no dead control left on screen */
+
 function unlockAudio(){
+  if(!MUSIC_ENABLED)return;
   if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
   if(audioCtx.state==='suspended')audioCtx.resume();
 }
 function startMusic(){
+  if(!MUSIC_ENABLED||musicOn)return;  /* guard: repeat taps can't stack drones */
   unlockAudio();
-  const master=audioCtx.createGain();master.gain.value=0;master.connect(audioCtx.destination);
-  master.gain.linearRampToValueAtTime(0.1,audioCtx.currentTime+2);
+  const out=master=audioCtx.createGain();
+  out.gain.value=0;out.connect(audioCtx.destination);
+  out.gain.linearRampToValueAtTime(0.1,audioCtx.currentTime+2);
   [[132,.5],[198,.35],[264,.22]].forEach(([f,v])=>{
     const o=audioCtx.createOscillator(),g2=audioCtx.createGain(),lp=audioCtx.createBiquadFilter();
     o.type='sawtooth';o.frequency.value=f;lp.type='lowpass';lp.frequency.value=900;
     const lfo=audioCtx.createOscillator(),lg=audioCtx.createGain();
     lfo.frequency.value=0.1+Math.random()*0.1;lg.gain.value=v*0.25;
     lfo.connect(lg);lg.connect(g2.gain);g2.gain.value=v*0.5;
-    o.connect(lp);lp.connect(g2);g2.connect(master);o.start();lfo.start();
-    droneNodes.push(o,lfo);
+    o.connect(lp);lp.connect(g2);g2.connect(out);o.start();lfo.start();
+    voices.push(o,lfo);
   });
   function bell(){
     const o=audioCtx.createOscillator(),g2=audioCtx.createGain();
@@ -1145,17 +1196,26 @@ function startMusic(){
     const g3=audioCtx.createGain();g3.gain.value=0.3;
     g2.gain.setValueAtTime(0.22,audioCtx.currentTime);
     g2.gain.exponentialRampToValueAtTime(0.0001,audioCtx.currentTime+3.5);
-    o.connect(g2);o2.connect(g3);g3.connect(g2);g2.connect(master);
+    o.connect(g2);o2.connect(g3);g3.connect(g2);g2.connect(out);
     o.start();o2.start();o.stop(audioCtx.currentTime+3.6);o2.stop(audioCtx.currentTime+3.6);
+    voices.push(o,o2);                /* tracked, so mute silences a ringing bell */
   }
   bell();bellTimer=setInterval(bell,9000);
-  droneNodes.push(master);
   musicOn=true;mBtn.classList.remove('muted');
 }
 function stopMusic(){
-  clearInterval(bellTimer);
-  droneNodes.forEach(n=>{try{n.stop?n.stop():n.disconnect();}catch(e){}});
-  droneNodes=[];musicOn=false;mBtn.classList.add('muted');
+  clearInterval(bellTimer);bellTimer=null;
+  const dying=voices,out=master,ctx=audioCtx;
+  voices=[];master=null;musicOn=false;mBtn.classList.add('muted');
+  if(!out||!ctx)return;
+  const t=ctx.currentTime;              /* fade out — cutting dead clicks */
+  out.gain.cancelScheduledValues(t);
+  out.gain.setValueAtTime(out.gain.value,t);
+  out.gain.linearRampToValueAtTime(0.0001,t+.35);
+  setTimeout(()=>{
+    dying.forEach(n=>{try{n.stop()}catch(e){}try{n.disconnect()}catch(e){}});
+    try{out.disconnect()}catch(e){}
+  },420);
 }
 mBtn.addEventListener('click',()=>musicOn?stopMusic():startMusic());
 </script>

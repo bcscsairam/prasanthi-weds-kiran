@@ -6,6 +6,7 @@ and deepam pair, kumkum accents and an ultra-faint kolam ground. The couple's
 names blink with gold light, and a tap anywhere blows a gust of pastel flowers
 across the screen.
 
+**Live:** [prasanthi-weds-kiran.netlify.app](https://prasanthi-weds-kiran.netlify.app/)
 **Wedding:** Thursday, 27th August 2026 · Muhurtham at 11:41 PM
 **Venue:** Dhanavarsha Function Hall, Ganti Road, P. Gannavaram,
 Dr. B.R. Ambedkar Konaseema District, Andhra Pradesh
@@ -18,7 +19,7 @@ Dr. B.R. Ambedkar Konaseema District, Andhra Pradesh
 |---|---|
 | `index.html` | **The entire website.** Markup, styles, scripts and the couple's portrait are all inside this one file. |
 | `deploy.sh` | One command to push updates live. |
-| `DEPLOY.md` | How to get it online. Start here. |
+| `DEPLOY.md` | The live link, how updates reach it, and the phone test. |
 | `README.md` | This document — how to edit it. |
 
 There is **no build step, no `npm install`, no dependencies.** The portrait is
@@ -29,7 +30,8 @@ file. The only thing loaded from the internet is the Google Fonts stylesheet.
 > automatically at the root URL. Rename it and guests will have to type the
 > filename in the address bar.
 
-**To publish it, see `DEPLOY.md`.** The rest of this document is about editing.
+**Already published.** Edits go live by saving, then running `bash deploy.sh` —
+see `DEPLOY.md`. The rest of this document is about what to edit.
 
 ---
 
@@ -70,6 +72,7 @@ Everything is in `index.html`. Use <kbd>Ctrl</kbd>+<kbd>F</kbd> to find these.
 | The bride's parents | `class="hosts"` | Two inline `.host` spans joined by a `.host-amp` ampersand. Deliberately set at body size in plain ink so the names blend into the sentence the `.lead` paragraph finishes — raise `font-size` or `font-weight` on `.host` if you want them to stand out more. |
 | Venue / map pin | `Dhanavarsha` | Appears in the panel, the directions card and the Maps link |
 | Muhurtham block | `muhurtham-panel` | Date, time, panchangam, venue, vindu line |
+| Vindu (dinner) time | `7:00 PM` | ⚠️ Written in **two** places — the muhurtham panel and the `EVENTS` list. Change both, or the card contradicts itself. |
 | Names & degrees | `class="couple reveal"` | Also `cover-names` for the opening screen |
 | Page title / browser tab | `<title>` | |
 
@@ -176,6 +179,58 @@ The steady, non-blinking version sits on the `filter:` and `text-shadow:`
 declarations on `.cover-names span`, `.couple .name`, `.cover-date` and
 `.detail-block .big` — that is what visitors with *Reduce Motion* switched on
 see, so keep it lit if you edit.
+
+---
+
+## The glowing buttons
+
+**RSVP** and **Directions** are the only two things a guest is asked to do, so
+both carry a halo that breathes on the same 3.4-second clock as the names — the
+whole page pulses as one rather than in pieces.
+
+| Search for | What it controls |
+|---|---|
+| `orbGlow` | the halo breathing in and out |
+| `orbPing` | the soft ring that travels outward once per cycle |
+| `--glow` | each button's colour, as an `r,g,b` triplet |
+
+Each button sets its own `--glow` next to its `color` — rose `150,87,105` for
+RSVP, powder `71,97,123` for Directions — and the halo is composed from that one
+value at several alphas. **Change the colour in both places** or the ring and the
+icon will disagree.
+
+**Calmer:** lower the alphas in the `orbGlow` keyframes (`.20` and `.48`).
+**Off entirely:** delete the `animation:` line on `.orb-btn` and the
+`.orb-btn::after` rule. The buttons keep the resting halo and stay perfectly
+usable.
+
+Two things worth leaving alone:
+
+- **The resting glow is declared on `.orb-btn` itself,** not only inside the
+  keyframes. That is deliberate — it is what *Reduce Motion* visitors see, and
+  without it their buttons would go flat.
+- **The hover rule sets `animation:none`.** A running animation outranks every
+  normal CSS rule, so without that line the hover state would silently do
+  nothing on a laptop.
+
+---
+
+## The music
+
+**Switched off.** The synthesised drone came out harsh on phone speakers, so it
+is disabled and the speaker button is hidden with it.
+
+Search `MUSIC_ENABLED` in the JavaScript:
+
+```js
+const MUSIC_ENABLED=false;   // ← true brings the music and its button back
+```
+
+That one word is the whole switch. Nothing else needs touching — the button
+reappears, and the drone fades in with the reveal as before.
+
+If you do turn it back on, listen on a **phone speaker**, not headphones. That
+is where it was a problem.
 
 ---
 
