@@ -166,8 +166,12 @@ independently.
 | `auraBlink` | the pool of light spreading behind the names onto the paper |
 
 **Speed:** change `3.4s` in all six `animation:` lines together — they must
-match or the twinkle falls out of sync.
-**Intensity:** raise or lower the alpha on the bright keyframes (`7%`, `21%`).
+match or the twinkle falls out of sync. The buttons and *Tap to Open* run on this
+same clock, so the whole page pulses as one; change one, change all.
+**Intensity:** raise or lower the alpha and blur radius on the bright keyframes
+(`7%`, `21%`). Note the trough keyframes carry a glow too — that is the level the
+names sit at between flashes, and dropping it to nothing makes the twinkle read
+as a flicker rather than a breath.
 **Calmer:** delete the `14%` and `21%` keyframes for a single flash per cycle.
 
 Two things worth leaving alone:
@@ -192,6 +196,10 @@ see, so keep it lit if you edit.
 both carry a halo that breathes on the same 3.4-second clock as the names — the
 whole page pulses as one rather than in pieces.
 
+**RSVP is deliberately the bigger circle** — 74px against 60px — because it is
+the only thing the invitation actually asks a guest to do. `.orb-row` is
+bottom-aligned so the two labels still share a baseline despite the difference.
+
 | Search for | What it controls |
 |---|---|
 | `orbGlow` | the halo breathing in and out |
@@ -203,10 +211,31 @@ RSVP, powder `71,97,123` for Directions — and the halo is composed from that o
 value at several alphas. **Change the colour in both places** or the ring and the
 icon will disagree.
 
-**Calmer:** lower the alphas in the `orbGlow` keyframes (`.20` and `.48`).
+The *strength* of the halo is tokens too, so one button can be turned up without
+a second set of keyframes:
+
+```css
+--restB / --restS / --restA   /* resting — blur, spread, alpha */
+--loB   / --loS   / --loA     /* breathe, trough */
+--hiB   / --hiS   / --hiA     /* breathe, peak   */
+--ringA                       /* the outward ring */
+```
+
+`.orb-btn` holds the defaults; `.orb-btn.rsvp` overrides them with roughly half
+again the glow. To turn a button up or down, change its numbers there — the
+keyframes need no editing.
+
+**Calmer:** lower `--loA` and `--hiA`.
 **Off entirely:** delete the `animation:` line on `.orb-btn` and the
 `.orb-btn::after` rule. The buttons keep the resting halo and stay perfectly
 usable.
+
+## Tap to Open
+
+Two layers: `openGlow` on the button itself, and `glowBreath` on the pool of
+light behind it (`.open-wrap::before`). Both run on the same 3.4s clock. Turn the
+button's halo down in the `openGlow` keyframes, and the pool behind it in
+`glowBreath` and the `.open-wrap::before` gradient.
 
 Two things worth leaving alone:
 

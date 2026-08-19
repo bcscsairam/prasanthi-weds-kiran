@@ -163,8 +163,8 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
   background:var(--gold-grad);background-size:200% 100%;
   -webkit-background-clip:text;background-clip:text;color:transparent;
   animation:goldShimmer 7s linear infinite, nameBlink 3.4s ease-in-out infinite;
-  filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 18px rgba(236,204,142,.8))
-         drop-shadow(0 0 44px rgba(206,170,100,.4));
+  filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 26px rgba(242,212,152,.95))
+         drop-shadow(0 0 60px rgba(212,176,106,.62));
 }
 @keyframes goldShimmer{0%{background-position:0% 0}100%{background-position:200% 0}}
 /* — luminous glow: the names and the date catch light and breathe —
@@ -176,12 +176,12 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
      3 Hz photosensitivity threshold, and it stops entirely under
      prefers-reduced-motion. — */
 @keyframes nameBlink{
-  0%     {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 9px rgba(232,198,132,.32))}
-  7%     {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 28px rgba(252,232,178,1)) drop-shadow(0 0 62px rgba(224,190,124,.72))}
-  14%    {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 9px rgba(232,198,132,.32))}
-  21%    {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 32px rgba(254,238,192,1)) drop-shadow(0 0 70px rgba(228,196,132,.78))}
-  30%    {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 9px rgba(232,198,132,.32))}
-  100%   {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 9px rgba(232,198,132,.32))}
+  0%     {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 15px rgba(236,204,142,.52))}
+  7%     {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 38px rgba(253,237,193,1)) drop-shadow(0 0 86px rgba(226,194,130,.88))}
+  14%    {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 15px rgba(236,204,142,.52))}
+  21%    {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 45px rgba(255,244,208,1)) drop-shadow(0 0 98px rgba(231,201,140,.94))}
+  30%    {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 15px rgba(236,204,142,.52))}
+  100%   {filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 15px rgba(236,204,142,.52))}
 }
 @keyframes dateBlink{
   0%     {text-shadow:0 0 9px rgba(232,198,132,.34)}
@@ -207,8 +207,18 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
   min-height:48px;padding:14px 36px;border-radius:2px;cursor:pointer;
   color:var(--white);background:linear-gradient(120deg,#6E5620,#8A6B2C);
   border:none;position:relative;overflow:hidden;
-  box-shadow:0 10px 28px -8px rgba(163,131,68,.5);
-  transition:transform .3s;
+  /* lit at rest as well as in the keyframes, so the button still reads as
+     the thing to press under prefers-reduced-motion */
+  box-shadow:0 10px 28px -8px rgba(163,131,68,.5),
+             0 0 30px 3px rgba(222,190,126,.6);
+  transition:transform .3s, box-shadow .3s;
+  animation:openGlow 3.4s ease-in-out infinite;   /* the page's shared clock */
+}
+@keyframes openGlow{
+  0%,100%{box-shadow:0 10px 28px -8px rgba(163,131,68,.5),
+                     0 0 22px 1px rgba(222,190,126,.45)}
+  50%    {box-shadow:0 12px 32px -8px rgba(163,131,68,.55),
+                     0 0 52px 9px rgba(232,202,142,.9)}
 }
 .open-btn:active{transform:scale(.97)}
 .open-btn::after{
@@ -233,11 +243,11 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
 /* — Stage 0: breathing glow behind Tap to Open — */
 .open-wrap{position:relative;display:inline-block}
 .open-wrap::before{
-  content:"";position:absolute;inset:-14px -22px;border-radius:60px;
-  background:radial-gradient(ellipse at center,rgba(198,161,91,.4),transparent 68%);
-  opacity:.25;animation:glowBreath 3.4s ease-in-out infinite;pointer-events:none;
+  content:"";position:absolute;inset:-20px -30px;border-radius:70px;
+  background:radial-gradient(ellipse at center,rgba(207,172,102,.62),transparent 70%);
+  opacity:.4;animation:glowBreath 3.4s ease-in-out infinite;pointer-events:none;
 }
-@keyframes glowBreath{0%,100%{opacity:.18;transform:scale(.96)}50%{opacity:.5;transform:scale(1.05)}}
+@keyframes glowBreath{0%,100%{opacity:.3;transform:scale(.96)}50%{opacity:.85;transform:scale(1.07)}}
 /* — Stage 1: tactile acknowledgement — */
 .tap-ripple{
   position:fixed;z-index:60;width:16px;height:16px;border-radius:50%;
@@ -373,22 +383,22 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
   background:var(--gold-grad);background-size:200% 100%;
   -webkit-background-clip:text;background-clip:text;color:transparent;
   animation:goldShimmer 8s linear infinite, nameBlink 3.4s ease-in-out infinite;
-  filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 18px rgba(236,204,142,.8))
-         drop-shadow(0 0 44px rgba(206,170,100,.4));
+  filter:drop-shadow(0 1px 0 rgba(74,56,15,.3)) drop-shadow(0 0 26px rgba(242,212,152,.95))
+         drop-shadow(0 0 60px rgba(212,176,106,.62));
 }
 /* soft aura pooling behind the names — makes the halo read as light
    spilling onto the paper, not just an outline */
 .cover-names,.couple{position:relative}
 .cover-names::before,.couple::before{
   content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  width:120%;height:150%;pointer-events:none;
-  background:radial-gradient(ellipse at center,rgba(236,204,142,.32),rgba(236,204,142,.10) 45%,transparent 70%);
+  width:132%;height:162%;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(242,212,152,.46),rgba(236,204,142,.15) 45%,transparent 72%);
   animation:auraBlink 3.4s ease-in-out infinite;
 }
 /* positioned children paint after the absolutely-positioned aura,
    so the letters stay on top without needing a negative z-index */
 .cover-names > *,.couple > *{position:relative}
-@keyframes auraBlink{0%{opacity:.4}7%{opacity:1}14%{opacity:.4}21%{opacity:1}30%,100%{opacity:.4}}
+@keyframes auraBlink{0%{opacity:.52}7%{opacity:1}14%{opacity:.52}21%{opacity:1}30%,100%{opacity:.52}}
 .couple .deg{
   display:block;font-family:'Jost',sans-serif;font-size:10.5px;letter-spacing:2.5px;
   text-transform:uppercase;color:var(--ink-soft);margin-top:6px;
@@ -456,7 +466,9 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
 /* ══════════════════════════════════════════════════════════════
    5. ACTION BUTTONS — refined pills, ≥44px targets
    ══════════════════════════════════════════════════════════════ */
-.orb-row{display:flex;justify-content:center;gap:40px;margin:26px 0 8px}
+/* bottom-aligned so the two labels share a baseline even though RSVP is the
+   larger of the two circles */
+.orb-row{display:flex;justify-content:center;align-items:flex-end;gap:36px;margin:26px 0 8px}
 .orb-cell{display:flex;flex-direction:column;align-items:center;gap:9px}
 .orb-btn{
   width:60px;height:60px;border-radius:50%;cursor:pointer;
@@ -465,31 +477,46 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
   background:var(--white);color:var(--gold-deep);
   transition:transform .3s, box-shadow .3s;position:relative;
   /* --glow is the button's own accent as an r,g,b triplet, so the halo
-     below can be composed at several alphas from one value */
+     below can be composed at several alphas from one value. The blur,
+     spread and alpha of each state are tokens too, so a button can be
+     turned up on its own without a second set of keyframes. */
   --glow:201,169,106;
-  /* lifted off the paper, then lit. The lit layer is declared here and
-     not only in the keyframes, so it survives prefers-reduced-motion. */
+  --restB:18px; --restS:2px; --restA:.34;   /* resting — what reduce-motion sees */
+  --loB:13px;   --loS:1px;   --loA:.20;     /* breathe, trough */
+  --hiB:28px;   --hiS:6px;   --hiA:.48;     /* breathe, peak   */
+  --ringA:.5;                               /* the outward ring */
   box-shadow:0 10px 26px -10px rgba(61,54,44,.25),
-             0 0 18px 2px rgba(var(--glow),.34);
+             0 0 var(--restB) var(--restS) rgba(var(--glow),var(--restA));
   animation:orbGlow 3.4s ease-in-out infinite;   /* same clock as the names */
 }
 .orb-btn:focus-visible{outline:2px solid rgba(var(--glow),.9);outline-offset:3px}
-.orb-btn.rsvp{color:var(--rosegold);border-color:var(--rosegold);--glow:150,87,105}
+/* RSVP is the one thing the invitation actually asks for, so it is the
+   larger circle and carries roughly half again the glow of Directions */
+.orb-btn.rsvp{
+  color:var(--rosegold);border-color:var(--rosegold);--glow:150,87,105;
+  width:74px;height:74px;
+  --restB:30px; --restS:5px; --restA:.52;
+  --loB:22px;   --loS:3px;   --loA:.34;
+  --hiB:46px;   --hiS:12px;  --hiA:.80;
+  --ringA:.68;
+}
 .orb-btn.dirs{color:var(--powder);border-color:var(--powder);--glow:71,97,123}
 .orb-btn svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.orb-btn.rsvp svg{width:30px;height:30px}
+.orb-cell .orb-label{transition:color .3s}
 /* a single soft ring breathing outward once per cycle — a beacon, not a
    badge. Border-only, so it never covers the icon; inert to taps. */
 .orb-btn::after{
   content:'';position:absolute;inset:-1px;border-radius:50%;
-  border:1px solid rgba(var(--glow),.5);
+  border:1px solid rgba(var(--glow),var(--ringA));
   pointer-events:none;opacity:0;
   animation:orbPing 3.4s ease-out infinite;
 }
 @keyframes orbGlow{
   0%,100%{box-shadow:0 10px 26px -10px rgba(61,54,44,.25),
-                     0 0 13px 1px rgba(var(--glow),.20)}
+                     0 0 var(--loB) var(--loS) rgba(var(--glow),var(--loA))}
   50%    {box-shadow:0 10px 26px -10px rgba(61,54,44,.25),
-                     0 0 28px 6px rgba(var(--glow),.48)}
+                     0 0 var(--hiB) var(--hiS) rgba(var(--glow),var(--hiA))}
 }
 @keyframes orbPing{
   0%      {transform:scale(1);   opacity:.5}
@@ -501,8 +528,10 @@ canvas#blooms{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-e
   .orb-btn:hover{
     animation:none;
     transform:translateY(-2px);
+    /* hold the peak of the breathe rather than a second hard-coded glow,
+       so a button that was turned up stays turned up on hover */
     box-shadow:0 14px 30px -10px rgba(61,54,44,.28),
-               0 0 32px 7px rgba(var(--glow),.55);
+               0 0 var(--hiB) var(--hiS) rgba(var(--glow),var(--hiA));
   }
 }
 /* last, so the press beats both the hover lift and the resting state */
