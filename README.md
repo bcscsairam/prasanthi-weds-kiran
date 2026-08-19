@@ -17,19 +17,23 @@ Dr. B.R. Ambedkar Konaseema District, Andhra Pradesh
 
 | File | What it is |
 |---|---|
-| `index.html` | **The website.** Markup, styles, scripts and the couple's portrait are all inside this one file. |
-| `shatamanam-bhavati.mp3` | The song. The one asset kept outside `index.html` — see *The music*. |
+| `index.html` | **The website.** Markup, styles and scripts, all in one file. |
+| `portrait.jpg` | The couple's photo. |
+| `shatamanam-bhavati.mp3` | The song — see *The music*. |
 | `deploy.sh` | One command to push updates live. |
 | `DEPLOY.md` | The live link, how updates reach it, and the phone test. |
 | `RSVP-SHEET.md` | How to collect RSVPs in a Google Sheet. |
 | `README.md` | This document — how to edit it. |
 
-There is **no build step, no `npm install`, no dependencies.** The portrait is
-embedded as base64, so there are no image paths that can break when you move the
-file. The song is the one exception — 3.8 MB of base64 would have to finish
-downloading before the invitation could draw, where a separate file streams
-alongside it. Keep the two together. From the internet, the page loads only the
-Google Fonts stylesheet.
+There is **no build step, no `npm install`, no dependencies.**
+
+**The three files must stay together in one folder.** The photo and the song sit
+beside `index.html` rather than inside it, and that is deliberate: the portrait
+used to be embedded as base64, which made `index.html` 202 KB and meant a guest's
+phone had to download the whole thing — photo included — before it could draw a
+single word. As separate files the page is 70 KB and paints almost at once, with
+the photo and song arriving alongside it. `deploy.sh` warns you if either has
+gone missing. From the internet, the page loads only the Google Fonts stylesheet.
 
 > **Keep the filename `index.html`.** Every hosting platform serves that name
 > automatically at the root URL. Rename it and guests will have to type the
@@ -71,7 +75,7 @@ Everything is in `index.html`. Use <kbd>Ctrl</kbd>+<kbd>F</kbd> to find these.
 
 | To change | Search for | Notes |
 |---|---|---|
-| The portrait photo | `<img src="data:image/jpeg;base64,` | Replace the whole `src="..."` value. Convert at [base64-image.de](https://www.base64-image.de), or use `src="photo.jpg"` and put `photo.jpg` beside `index.html`. **Crop to 3:4 portrait first** and keep it around 560×747 — the frame is only 220px wide, so anything larger just makes the page heavier. Faces should sit in the upper-middle third; the frame is arched, so the top corners are cut away. |
+| The portrait photo | — | Replace `portrait.jpg` with your own, keeping the name. **Crop to 3:4 portrait first** and keep it around 560×747 — the frame is only 220px wide, so anything larger just makes the page heavier for no gain. Faces should sit in the upper-middle third; the frame is arched, so the top corners are cut away. If you rename the file, update `src` and the `width`/`height` on the `<img>` to match. |
 | WhatsApp RSVP number | `wa.me/919440972344` | Keep the `91` country code, no `+` or spaces |
 | Where RSVPs are recorded | `RSVP_ENDPOINT` | The Google Sheet web-app URL. Empty means WhatsApp only. Setup: `RSVP-SHEET.md` |
 | Ceremony list | `const EVENTS` | Four entries: `["Title", "Date · Time", "Description"]`. Leave the middle string empty to hide the time. |
@@ -256,40 +260,44 @@ Two things worth leaving alone:
 to open, plays **0:00 → 2:40**, then returns to the start and goes round again —
 so nobody reaches the tail of the track.
 
-> ⚠️ **This is the one file that is not inside `index.html`.** The song must sit
-> in the same folder as `index.html`, under exactly that name. Move or rename it
-> and the site still works perfectly — just silently. `deploy.sh` warns you if it
-> has gone missing.
+> ⚠️ **It must sit in the same folder as `index.html`, under exactly that name.**
+> Move or rename it and the site still works perfectly — just silently.
+> `deploy.sh` warns you if it has gone missing.
 
-The controls are four values at the top of the music section:
+The controls are three values at the top of the music section:
 
 ```js
 const MUSIC_ENABLED=true;   // false silences the site and hides the button
 const LOOP_END=160;         // 2:40 in seconds — where it returns to 0:00
-const SEAM=0.8;             // fade either side of the loop join
-const SONG_VOL=0.62;        // settled volume
+const SONG_VOL=0.30;        // settled volume, 0–1
 ```
 
+**Louder or softer:** `SONG_VOL`. It is the number to change, and the only one.
 **A different loop point:** `LOOP_END` is in *seconds* — 2:40 is `160`, 3:15
 would be `195`. Keep it below the track's real length (3:23 / 203s).
 **A different song:** drop the file in beside `index.html`, update the `src` on
 `<audio id="song">`, and reset `LOOP_END` to suit it.
-**Louder or softer:** `SONG_VOL`, between 0 and 1.
 
-Three things worth leaving alone:
+Four things worth leaving alone. Each of them is a bug that already happened:
 
 - **`play()` is called inside the tap handler.** iOS refuses audio that starts
   even a moment after the gesture, so moving it into a `setTimeout` would mean
-  no sound on any iPhone. The song starts silent and the *fade-in* is what gets
-  delayed, which is why it still enters with the reveal rather than the tap.
-- **The volume runs through a Web Audio gain node,** not `audio.volume`. iOS
-  ignores `.volume` on a media element completely, so the fades would not exist
-  on iPhone otherwise. On `file://` it falls back to `.volume`, because the
-  Web Audio route can come out silent when the page is opened by double-click.
-- **The fade is driven by `timeupdate` as well as the animation frame.** Frames
-  stop in a backgrounded tab; driving the volume from them alone left the song
-  playing silently. The step is scaled by elapsed time, so the fade lasts the
-  same two seconds either way.
+  no sound on any iPhone. The song starts near-silent and the *fade-in* is what
+  gets delayed, which is why it still enters with the reveal, not the tap.
+- **The Web Audio graph is built only *after* `resume()` resolves.**
+  `createMediaElementSource` permanently reroutes the element — once called, the
+  audio can no longer come out on its own. Building the graph before the context
+  is confirmed `running` produces a song that reports playing and is silent.
+  The element plays first; the graph is only ever an upgrade.
+- **Fades never depend on animation frames.** Frames stall whenever the page
+  isn't being painted, and a volume ramp driven by them can simply never
+  arrive. The audio thread ramps the gain when the graph is up; a plain
+  `setInterval` does it otherwise.
+- **Muting pauses on its own timer,** not when the fade finishes. Tying the
+  pause to the fade meant tapping mute left the song playing for over a second.
+  There is also a check two seconds after start that forces the volume up if
+  the ramp never landed — a song that is playing and inaudible is the worst
+  outcome, so it is guarded twice.
 
 ---
 
