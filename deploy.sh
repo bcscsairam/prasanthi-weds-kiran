@@ -32,18 +32,11 @@ if ! command -v git >/dev/null 2>&1; then
 fi
 
 echo "Found:"
-for f in index.html portrait.jpg shatamanam-bhavati.mp3 README.md DEPLOY.md RSVP-SHEET.md; do
+for f in index.html shatamanam-bhavati.mp3 README.md DEPLOY.md RSVP-SHEET.md; do
   [ -f "$f" ] && echo "   • $f  ($(du -h "$f" | cut -f1))"
 done
 
-# the photo and the song live beside index.html, not inside it —
-# easy to leave behind when copying the folder somewhere
-if [ ! -f "portrait.jpg" ]; then
-  echo
-  echo "! portrait.jpg is missing — the invitation will publish, but the"
-  echo "  couple's photo will show as a broken image. Put it back beside"
-  echo "  index.html before pushing."
-fi
+# the song is a separate file — easy to leave behind when copying the folder
 if [ ! -f "shatamanam-bhavati.mp3" ]; then
   echo
   echo "! shatamanam-bhavati.mp3 is missing — the site will publish and work,"
