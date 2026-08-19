@@ -1181,7 +1181,7 @@ rsvpDlg.addEventListener('click',e=>{if(e.target===rsvpDlg)rsvpDlg.close();});
    Left empty, nothing is sent anywhere and the WhatsApp step
    behaves exactly as it always has — the form never breaks.
    ══════════════════════════════════════════════════════════════ */
-const RSVP_ENDPOINT='';
+const RSVP_ENDPOINT='https://script.google.com/macros/s/AKfycbzQf0hY_hCuX2jVTLYRNfUy9cgPzXLz9JDLrCqTkKL3lR6wrXxSxUy6KZXeMH1ge8yCHQ/exec';
 
 function logRsvp(data){
   if(!RSVP_ENDPOINT)return;                      /* not wired up — stay silent */
