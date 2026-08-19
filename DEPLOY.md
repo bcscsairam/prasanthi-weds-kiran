@@ -33,6 +33,8 @@ yourself and open it on your phone.
       fall silent
 - [ ] Tap **RSVP**, fill it in, tap Send —
       **confirm WhatsApp opens to 9440972344 with the message ready**
+- [ ] If you have set up the Google Sheet, check a row appeared in it too
+      (`RSVP-SHEET.md`)
 - [ ] Tap **Directions → Open in Maps** — confirm it lands on Dhanavarsha
 - [ ] Read every name, date and time against the printed card
 - [ ] Confirm **Sri Borusu Chandrasekhara Rao** and

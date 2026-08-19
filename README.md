@@ -21,6 +21,7 @@ Dr. B.R. Ambedkar Konaseema District, Andhra Pradesh
 | `shatamanam-bhavati.mp3` | The song. The one asset kept outside `index.html` — see *The music*. |
 | `deploy.sh` | One command to push updates live. |
 | `DEPLOY.md` | The live link, how updates reach it, and the phone test. |
+| `RSVP-SHEET.md` | How to collect RSVPs in a Google Sheet. |
 | `README.md` | This document — how to edit it. |
 
 There is **no build step, no `npm install`, no dependencies.** The portrait is
@@ -72,6 +73,7 @@ Everything is in `index.html`. Use <kbd>Ctrl</kbd>+<kbd>F</kbd> to find these.
 |---|---|---|
 | The portrait photo | `<img src="data:image/jpeg;base64,` | Replace the whole `src="..."` value. Convert at [base64-image.de](https://www.base64-image.de), or use `src="photo.jpg"` and put `photo.jpg` beside `index.html`. **Crop to 3:4 portrait first** and keep it around 560×747 — the frame is only 220px wide, so anything larger just makes the page heavier. Faces should sit in the upper-middle third; the frame is arched, so the top corners are cut away. |
 | WhatsApp RSVP number | `wa.me/919440972344` | Keep the `91` country code, no `+` or spaces |
+| Where RSVPs are recorded | `RSVP_ENDPOINT` | The Google Sheet web-app URL. Empty means WhatsApp only. Setup: `RSVP-SHEET.md` |
 | Ceremony list | `const EVENTS` | Four entries: `["Title", "Date · Time", "Description"]`. Leave the middle string empty to hide the time. |
 | The bride's parents | `class="hosts"` | Two inline `.host` spans joined by a `.host-amp` ampersand. Deliberately set at body size in plain ink so the names blend into the sentence the `.lead` paragraph finishes — raise `font-size` or `font-weight` on `.host` if you want them to stand out more. |
 | Venue / map pin | `Dhanavarsha` | Appears in the panel, the directions card and the Maps link |
@@ -322,8 +324,10 @@ it. `MAX_BLOOMS` caps how many can be on screen at once, and `gust` (in the
   tap targets are at least 44px, and text contrast meets WCAG AA throughout.
 - **Safe areas:** respects notches and home indicators via
   `env(safe-area-inset-*)`.
-- **Privacy:** no analytics, no trackers, no cookies. RSVPs go straight from the
-  guest's phone to WhatsApp — nothing is stored anywhere.
+- **Privacy:** no analytics, no trackers, no cookies. An RSVP goes from the
+  guest's phone to WhatsApp, and — once `RSVP_ENDPOINT` is filled in — to your
+  own Google Sheet. Only what they typed into the form: no location, no device
+  details, nothing else. See `RSVP-SHEET.md`.
 - **Offline-capable:** if you ever need it to work with no internet at all,
   delete the Google Fonts `<link>` — the design falls back to system serifs and
   everything else still works, since the image, styles and scripts are all

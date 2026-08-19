@@ -32,7 +32,7 @@ if ! command -v git >/dev/null 2>&1; then
 fi
 
 echo "Found:"
-for f in index.html shatamanam-bhavati.mp3 README.md DEPLOY.md; do
+for f in index.html shatamanam-bhavati.mp3 README.md DEPLOY.md RSVP-SHEET.md; do
   [ -f "$f" ] && echo "   • $f  ($(du -h "$f" | cut -f1))"
 done
 

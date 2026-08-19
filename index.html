@@ -1172,20 +1172,58 @@ mapOv.addEventListener('click',e=>{if(e.target===mapOv)mapOv.hidden=true;});
 $('#rsvpBtn').addEventListener('click',()=>rsvpDlg.showModal());
 $('#rsvpClose').addEventListener('click',()=>rsvpDlg.close());
 rsvpDlg.addEventListener('click',e=>{if(e.target===rsvpDlg)rsvpDlg.close();});
-/* RSVP → WhatsApp: opens a chat with the RSVP pre-filled, guest just taps send */
+/* ══════════════════════════════════════════════════════════════
+   RSVP → Google Sheet (silent) + WhatsApp (visible)
+
+   Paste the /exec URL of your Apps Script deployment between the
+   quotes below. Setup is written out in RSVP-SHEET.md.
+
+   Left empty, nothing is sent anywhere and the WhatsApp step
+   behaves exactly as it always has — the form never breaks.
+   ══════════════════════════════════════════════════════════════ */
+const RSVP_ENDPOINT='';
+
+function logRsvp(data){
+  if(!RSVP_ENDPOINT)return;                      /* not wired up — stay silent */
+  const body=JSON.stringify(data);
+  /* sendBeacon is built for exactly this: the browser promises to deliver it
+     even though the very next line sends the guest off to WhatsApp. A plain
+     fetch can be killed mid-flight when a phone backgrounds the page. */
+  try{
+    const blob=new Blob([body],{type:'text/plain;charset=UTF-8'});
+    if(navigator.sendBeacon&&navigator.sendBeacon(RSVP_ENDPOINT,blob))return;
+  }catch(err){}
+  try{                                           /* older browsers */
+    fetch(RSVP_ENDPOINT,{method:'POST',mode:'no-cors',keepalive:true,
+      headers:{'Content-Type':'text/plain;charset=UTF-8'},body});
+  }catch(err){}
+}
+
+let rsvpSending=false;
 $('#rsvpForm').addEventListener('submit',e=>{
   e.preventDefault();
+  if(rsvpSending)return;                         /* a double-tap is one RSVP */
+  rsvpSending=true;setTimeout(()=>rsvpSending=false,2500);
   const f=e.target;
+  const data={
+    name:f.name.value.trim(),
+    attending:f.attending.value,
+    guests:f.guests.value,
+    accommodation:f.accommodation.value,
+    message:f.message.value.trim()
+  };
+  logRsvp(data);                                 /* recorded before we navigate */
   const lines=[
     'RSVP — Prasanthi weds Kiran',
-    'Name: '+f.name.value,
-    'Attending: '+f.attending.value,
-    'Guests: '+f.guests.value,
-    'Accommodation: '+f.accommodation.value
+    'Name: '+data.name,
+    'Attending: '+data.attending,
+    'Guests: '+data.guests,
+    'Accommodation: '+data.accommodation
   ];
-  if(f.message.value.trim())lines.push('Blessings: '+f.message.value.trim());
+  if(data.message)lines.push('Blessings: '+data.message);
   window.open('https://wa.me/919440972344?text='+encodeURIComponent(lines.join('\n')),'_blank');
   rsvpDlg.close();
+  f.reset();
 });
 
 /* ══════════════════════════════════════════════════════════════
